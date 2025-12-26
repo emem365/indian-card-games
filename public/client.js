@@ -177,6 +177,11 @@ document.getElementById('game-exit-btn').addEventListener('click', exitRoom);
 
 
 // Socket Events
+// Listen for disconnects
+socket.on('playerDisconnected', (data) => {
+    showToast(`${data.name} has disconnected`, 'error');
+});
+
 socket.on('roomCreated', ({ roomId, playerId }) => {
     currentRoomId = roomId;
     myPlayerId = playerId;

@@ -520,7 +520,8 @@ input:focus {
 .card.disabled {
     cursor: not-allowed;
     filter: grayscale(1) brightness(0.7);
-    pointer-events: none; /* Prevents all mouse interaction including hover */
+    pointer-events: none;
+    /* Prevents all mouse interaction including hover */
 }
 
 .card.disabled:hover {
@@ -673,6 +674,11 @@ li {
 .toast.visible {
     opacity: 1;
     transform: translateX(-50%) translateY(-10px);
+}
+
+.toast.error {
+    background: #ef4444;
+    /* Red for errors */
 }
 
 .exit-btn {

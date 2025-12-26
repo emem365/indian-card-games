@@ -61,6 +61,12 @@ class GameState {
         const player = this.players.find(p => p.id === userId);
         if (player) {
             player.connected = false;
+            // Notify others
+            this.io.to(this.roomId).emit('playerDisconnected', {
+                playerId: userId,
+                name: player.name,
+                seat: player.seat
+            });
             this.broadcastState();
         }
     }
