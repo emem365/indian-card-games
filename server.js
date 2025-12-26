@@ -7,9 +7,33 @@ const GameState = require('./game/GameState');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Allow all origins for now (fixes potential CORS issues)
+        methods: ["GET", "POST"]
+    }
+});
 
+// Middleware: Log all requests
+app.use((req, res, next) => {
+    console.log(`[REQUEST] ${req.method} ${req.url}`);
+    next();
+});
+
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Explicit Root Route (Fallback if static fails)
+app.get('/', (req, res) => {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    console.log(`[ROOT] Serving index.html from: ${indexPath}`);
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('[ROOT] Error serving index.html:', err);
+            res.status(500).send('Error loading game');
+        }
+    });
+});
 
 const rooms = new Map(); // roomId -> GameState
 
