@@ -107,9 +107,8 @@ io.on('connection', (socket) => {
     });
 });
 
-const port = process.env.PORT || 8080; // Cloud Run provides the PORT env var
-const host = '0.0.0.0'; // MUST be 0.0.0.0
-
-app.listen(port, host, () => {
-    console.log(`Server running at http://${host}:${port}/`);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    // Restart Triggered at 2025-12-27T02:17:24
 });
