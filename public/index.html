@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaugadi - Premium Card Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+
+    <div id="app">
+        <!-- Landing Screen -->
+        <section id="landing-screen" class="screen active">
+            <div class="content">
+                <h1 class="logo">Chau<span class="highlight">gadi</span></h1>
+                <p class="tagline">The Classic Indian Strategy Game</p>
+                <div class="input-group">
+                    <input type="text" id="username-input" placeholder="Enter your name" maxlength="12">
+                </div>
+                <div class="actions">
+                    <button id="create-btn" class="btn primary">Create Room</button>
+                    <div class="join-container">
+                        <input type="text" id="room-code-input" placeholder="Room Code" maxlength="6">
+                        <button id="join-btn" class="btn secondary">Join</button>
+                    </div>
+                </div>
+                <button id="how-to-play-btn" class="btn link">How to Play</button>
+            </div>
+        </section>
+
+        <!-- Lobby Screen -->
+        <section id="lobby-screen" class="screen">
+            <button id="lobby-exit-btn" class="btn small danger exit-btn-fixed">Exit</button>
+            <div class="header">
+                <h2>Lobby <span id="room-code-container" class="room-code-badge" title="Click to copy"><span
+                            id="room-code-display"></span> <span class="copy-icon">📋</span></span></h2>
+            </div>
+            <div class="players-list" id="lobby-players">
+                <!-- Players inserted here -->
+            </div>
+            <div class="lobby-status">Waiting for players... (<span id="player-count">1</span>/4)</div>
+        </section>
+
+        <!-- Game Screen -->
+        <section id="game-screen" class="screen">
+            <button id="game-exit-btn" class="btn small danger exit-btn-fixed">Exit</button>
+            <div class="game-info">
+                <div class="score-board">
+                    <div class="team-score" id="team1-score">Team 1: 0</div>
+                    <div class="team-score" id="team2-score">Team 2: 0</div>
+                </div>
+                <div class="trump-display" id="trump-display">Trump: <span id="trump-suit">-</span></div>
+            </div>
+
+            <div class="table-area">
+                <!-- Players placed absolutely -->
+                <div id="opponent-top" class="player-seat top">
+                    <div class="avatar"></div>
+                    <div class="name">P3</div>
+                    <div class="card-count">0 cards</div>
+                </div>
+                <div id="opponent-left" class="player-seat left">
+                    <div class="avatar"></div>
+                    <div class="name">P2</div>
+                    <div class="card-count">0 cards</div>
+                </div>
+                <div id="opponent-right" class="player-seat right">
+                    <div class="avatar"></div>
+                    <div class="name">P4</div>
+                    <div class="card-count">0 cards</div>
+                </div>
+
+                <!-- Center area for played cards and UI overlays -->
+                <div class="center-stage">
+                    <div id="trick-pile" class="trick-pile"></div>
+
+                    <!-- Dealer Spinner -->
+                    <div id="dealer-spinner" class="spinner hidden">
+                        <div class="arrow"></div>
+                    </div>
+                </div>
+
+                <!-- Modals (Moved out for Z-Index) -->
+                <div id="bidding-modal" class="modal hidden">
+                    <h3>Place Your Bid</h3>
+                    <p>Minimum bid: <span id="min-bid-val">7</span></p>
+                    <div class="bid-controls">
+                        <input type="number" id="bid-amount" min="7" max="13" value="7">
+                        <button id="place-bid-btn" class="btn small">Bid</button>
+                        <button id="pass-bid-btn" class="btn small secondary">Pass</button>
+                    </div>
+                </div>
+
+                <!-- Trump Selection Modal -->
+                <div id="trump-modal" class="modal hidden">
+                    <h3>Select Trump</h3>
+                    <div class="suit-options">
+                        <button class="suit-btn" data-suit="S">♠</button>
+                        <button class="suit-btn" data-suit="H">♥</button>
+                        <button class="suit-btn" data-suit="D">♦</button>
+                        <button class="suit-btn" data-suit="C">♣</button>
+                    </div>
+                </div>
+
+                <!-- My Hand -->
+                <div id="my-seat" class="player-seat bottom">
+                    <div class="my-hand" id="my-hand">
+                        <!-- Cards injected here -->
+                    </div>
+                    <div class="name" id="my-name">You</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How to Play Modal/Screen -->
+        <div id="how-to-play-modal" class="overlay hidden">
+            <div class="modal-content">
+                <button id="close-htp" class="close-btn">&times;</button>
+                <h2>How to Play Chaugadi</h2>
+                <ul>
+                    <li><strong>Teams:</strong> 4 players, 2 teams (Opposite players are partners).</li>
+                    <li><strong>Objective:</strong> Win rounds (tricks) by playing the highest card.</li>
+                    <li><strong>Setup:</strong> 52 cards. Ace is high.</li>
+                    <li><strong>Bidding:</strong> Deal 5 cards. Bid how many tricks your team can win (Min 7). Highest
+                        bidder chooses Trump.</li>
+                    <li><strong>Play:</strong> Highest bidder leads. Must follow suit. Trump wins if you can't follow
+                        suit and play a Trump. Highest card wins the trick.</li>
+                    <li><strong>Winning:</strong> Win at least the number of tricks you bid to score points.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="animations.js"></script>
+    <script src="client.js"></script>
+</body>
+
+</html>

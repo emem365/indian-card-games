@@ -1,0 +1,709 @@
+:root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --primary: #3b82f6;
+    --accent: #f59e0b;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --success: #10b981;
+    --danger: #ef4444;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+}
+
+#app {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.screen {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.screen.active {
+    display: flex;
+    opacity: 1;
+    z-index: 10;
+}
+
+#landing-screen .content {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo {
+    font-size: 4rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.tagline {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+input {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    text-align: center;
+    width: 100%;
+    transition: border-color 0.3s;
+}
+
+input:focus {
+    border-color: var(--primary);
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.join-container {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    font-family: inherit;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn.primary {
+    background: linear-gradient(135deg, var(--primary), #2563eb);
+    color: white;
+    width: 100%;
+}
+
+.btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.btn.link {
+    background: transparent;
+    text-decoration: underline;
+    color: var(--text-muted);
+    margin-top: 1rem;
+}
+
+/* Lobby Visual Table */
+#lobby-screen h2 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+}
+
+.lobby-table-container {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.lobby-table-bg {
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    transform: rotate(45deg);
+    border: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+.lobby-seat {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.lobby-seat:hover {
+    transform: scale(1.05);
+}
+
+/* Seat Positions in Lobby */
+.lobby-seat[data-seat="0"] {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.lobby-seat[data-seat="2"] {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.lobby-seat[data-seat="1"] {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lobby-seat[data-seat="3"] {
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lobby-avatar {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    margin-bottom: 5px;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+    position: relative;
+}
+
+.lobby-seat.taken .lobby-avatar {
+    background: #334155;
+    border: 2px solid var(--primary);
+    font-size: 3rem;
+    /* Bigger size */
+    color: white;
+}
+
+.lobby-seat.taken.team2 .lobby-avatar {
+    border-color: var(--accent);
+}
+
+.lobby-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+
+.start-btn-container {
+    margin-top: 20px;
+}
+
+/* Game Area */
+/* Game Area Info */
+.game-info {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 140px;
+    /* Make space for the Exit button (approx 100px + margin) */
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    /* Snap to top to align with Exit button */
+    pointer-events: none;
+    z-index: 50;
+}
+
+.team-score {
+    font-size: 1.1rem;
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    margin-right: 10px;
+}
+
+.my-team-score {
+    color: var(--accent);
+    font-weight: bold;
+    border: 1px solid var(--accent);
+    background: rgba(56, 189, 248, 0.1);
+    /* Slight accent bg */
+}
+
+.trump-display {
+    /* Revert absolute centering, let it flow to the right of the flex container */
+    position: relative;
+    transform: none;
+    left: auto;
+    top: auto;
+
+    background: #334155;
+    /* Solid background for legibility */
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    font-weight: bold;
+    color: #fff;
+}
+
+.table-area {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.player-seat {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar {
+    width: 90px;
+    height: 90px;
+    background: #334155;
+    border-radius: 50%;
+    margin-bottom: 5px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    position: relative;
+    transition: all 0.3s;
+}
+
+/* Layered Accessories */
+.avatar-base {
+    z-index: 1;
+}
+
+.avatar-accessory {
+    position: absolute;
+    z-index: 2;
+    font-size: 2rem;
+}
+
+.avatar-accessory[data-type="eyes"] {
+    top: 35%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.8rem;
+}
+
+.avatar-accessory[data-type="head"] {
+    top: -25%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2.5rem;
+}
+
+.avatar-accessory[data-type="ears"] {
+    top: 10%;
+    right: -10%;
+    font-size: 1.5rem;
+    transform: rotate(10deg);
+}
+
+.avatar-accessory[data-type="mouth"] {
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+}
+
+.avatar-accessory[data-type="neck"] {
+    bottom: -15%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    z-index: 2;
+}
+
+
+.seat-active .avatar {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--accent);
+    transform: scale(1.1);
+}
+
+.top {
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.bottom {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+}
+
+.left {
+    top: 50%;
+    left: 40px;
+    transform: translateY(-50%);
+}
+
+.right {
+    top: 50%;
+    right: 40px;
+    transform: translateY(-50%);
+}
+
+.center-stage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    pointer-events: none;
+}
+
+.trick-pile {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Base Trick Card - Centered Reference */
+.trick-card {
+    position: absolute !important;
+    /* Force override of .card { position: relative } */
+    /* Base center: 50% - half width/height */
+    /* Width: 90px, Height: 130px */
+    z-index: 1;
+}
+
+/* Pos 0: Bottom (Me) -> Shift Down */
+.trick-card[data-pos="0"] {
+    left: calc(50% - 45px);
+    top: calc(50% + 15px);
+    /* Increased offset */
+    z-index: 4;
+}
+
+/* Pos 1: Left -> Shift Left */
+.trick-card[data-pos="1"] {
+    left: calc(50% - 145px);
+    /* Huge offset to verify */
+    top: calc(50% - 65px);
+    z-index: 3;
+}
+
+/* Pos 2: Top -> Shift Up */
+.trick-card[data-pos="2"] {
+    left: calc(50% - 45px);
+    top: calc(50% - 145px);
+    /* Increased offset */
+    z-index: 2;
+}
+
+/* Pos 3: Right -> Shift Right */
+.trick-card[data-pos="3"] {
+    left: calc(50% + 55px);
+    /* Huge offset to verify */
+    top: calc(50% - 65px);
+    z-index: 3;
+}
+
+.my-hand {
+    display: flex;
+    justify-content: center;
+    /* Center content inherently */
+    margin-top: 10px;
+    height: 140px;
+    transform-style: preserve-3d;
+}
+
+.card {
+    width: 90px;
+    height: 130px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    font-weight: bold;
+    font-size: 1.5rem;
+    box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    /* transition: transform 0.2s;  <-- REMOVED to prevent GSAP conflict */
+    transition: filter 0.2s;
+    user-select: none;
+    position: relative;
+    border: 1px solid #ccc;
+    margin-right: -40px;
+}
+
+.card.loaded {
+    transition: transform 0.2s, filter 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-20px);
+    z-index: 10;
+}
+
+.card.red {
+    color: #d32f2f;
+}
+
+.card.black {
+    color: #212121;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Disabled Card State */
+.card.disabled {
+    cursor: not-allowed;
+    filter: grayscale(1) brightness(0.7);
+    pointer-events: none; /* Prevents all mouse interaction including hover */
+}
+
+.card.disabled:hover {
+    transform: none !important;
+    box-shadow: none;
+}
+
+.modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1e293b;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+    z-index: 200;
+    pointer-events: auto;
+    width: 300px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.suit-btn {
+    font-size: 2rem;
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    margin: 0.5rem;
+    cursor: pointer;
+    color: white;
+    width: 50px;
+    height: 50px;
+}
+
+.suit-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+}
+
+.spinner .arrow {
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 60px solid var(--accent);
+    transform-origin: bottom center;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-content {
+    background: #1e293b;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 500px;
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+ul {
+    margin-top: 1rem;
+    text-align: left;
+    padding-left: 1.5rem;
+    line-height: 1.6;
+}
+
+li {
+    margin-bottom: 0.5rem;
+}
+
+.room-code-badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.2rem 0.8rem;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    vertical-align: middle;
+}
+
+.room-code-badge:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.room-code-badge:active {
+    transform: scale(0.95);
+}
+
+.copy-icon {
+    font-size: 1.2rem;
+    opacity: 0.7;
+}
+
+/* Toast for copy feedback */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--success);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-10px);
+}
+
+.exit-btn {
+    margin-left: 20px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.exit-btn-fixed {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
+    cursor: pointer;
+}
+
+.exit-btn-fixed:hover {
+    background: rgba(239, 68, 68, 0.4);
+    color: white;
+}
+
+.btn.danger {
+    background: rgba(239, 68, 68, 0.8);
+    color: white;
+}
+
+.btn.danger:hover {
+    background: #ef4444;
+}
