@@ -119,7 +119,7 @@ const Animations = {
         });
     },
 
-    spinDealer: (dealerIndex, mySeatIndex) => {
+    spinDealer: (dealerIndex, mySeatIndex, dealerName) => {
         const spinner = document.getElementById('dealer-spinner');
         spinner.classList.remove('hidden');
 
@@ -153,10 +153,112 @@ const Animations = {
             }
         );
 
-        setTimeout(() => spinner.classList.add('hidden'), 4000);
+        setTimeout(() => {
+            spinner.classList.add('hidden');
+
+            // Show Dealer Name
+            const textEl = document.getElementById('dealer-text');
+            if (textEl && dealerName) {
+                textEl.innerText = `${dealerName} is Dealing`;
+                textEl.classList.remove('hidden');
+                requestAnimationFrame(() => textEl.classList.add('visible'));
+
+                setTimeout(() => {
+                    textEl.classList.remove('visible');
+                    setTimeout(() => textEl.classList.add('hidden'), 500);
+                }, 3000);
+            }
+        }, 3200);
     },
 
     winningCelebration: (teamId) => {
-        // Maybe confetti later
+        // Handled by startFireworks in client loop context
+    },
+
+    startFireworks: () => {
+        const container = document.getElementById('fireworks-canvas');
+        if (!container) return;
+
+        // Clear previous
+        container.innerHTML = '';
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        container.appendChild(canvas);
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        const particles = [];
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 2 + 1; // Slower speed (was 5 + 2)
+                this.dx = Math.cos(angle) * speed;
+                this.dy = Math.sin(angle) * speed;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.01 + 0.005; // Slower decay (longer life)
+            }
+
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            update() {
+                this.x += this.dx;
+                this.y += this.dy;
+                this.dy += 0.05; // gravity
+                this.alpha -= this.decay;
+                this.draw();
+            }
+        }
+
+        function explode(x, y) {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff', '#ffffff'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Random explosions
+            if (Math.random() < 0.05) {
+                explode(Math.random() * width, Math.random() * height / 2);
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                if (particles[i].alpha <= 0) particles.splice(i, 1);
+            }
+
+            Animations.fireworksId = requestAnimationFrame(loop);
+        }
+
+        loop();
+    },
+
+    stopFireworks: () => {
+        if (Animations.fireworksId) {
+            cancelAnimationFrame(Animations.fireworksId);
+            Animations.fireworksId = null;
+        }
+        const container = document.getElementById('fireworks-canvas');
+        if (container) container.innerHTML = '';
     }
 };

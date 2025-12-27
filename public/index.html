@@ -60,6 +60,24 @@
                 <div class="trump-display" id="trump-display">Trump: <span id="trump-suit">-</span></div>
             </div>
 
+            <!-- New Running Score Display -->
+            <div id="running-score" class="running-score pill">
+                <span id="running-score-text">Dealer Score: 0</span>
+            </div>
+
+            <div class="bid-display" id="bid-display">Current Bid: <span id="bid-text">-</span></div>
+
+            <div id="win-screen" class="win-screen hidden">
+                <div class="fireworks-container" id="fireworks-canvas"></div>
+                <div class="win-content">
+                    <h1 class="win-title">Game Over!</h1>
+                    <div class="winner-text" id="winner-text">Team 1 Wins!</div>
+                    <div class="win-details" id="win-details"></div>
+                    <button id="play-again-btn" class="btn primary">Play Again</button>
+                    <button id="exit-win-btn" class="btn secondary">Exit</button>
+                </div>
+            </div>
+
             <div class="table-area">
                 <!-- Players placed absolutely -->
                 <div id="opponent-top" class="player-seat top">
@@ -86,6 +104,7 @@
                     <div id="dealer-spinner" class="spinner hidden">
                         <div class="arrow"></div>
                     </div>
+                    <div id="dealer-text" class="dealer-text hidden"></div>
                 </div>
 
                 <!-- Modals (Moved out for Z-Index) -->

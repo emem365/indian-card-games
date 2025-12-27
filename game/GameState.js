@@ -16,6 +16,9 @@ class GameState {
         this.trick = [];
         this.handsWon = { 1: 0, 2: 0 };
         this.leadSuit = null;
+        this.runnerScore = 0;
+        this.runnerTeam = -1;
+        this.dealerTeam = -1;
     }
 
     addPlayer(socket, name, userId) {
@@ -81,7 +84,6 @@ class GameState {
             { char: '🧢', type: 'head' },
             { char: '🎧', type: 'ears' },
             { char: '🧣', type: 'neck' }, // might be tricky
-            { char: '�', type: 'mouth' }
         ];
 
         const base = bases[Math.floor(Math.random() * bases.length)];
@@ -103,6 +105,9 @@ class GameState {
         this.broadcastState();
 
         this.dealerIndex = Math.floor(Math.random() * 4);
+        this.dealerTeam = (this.dealerIndex % 2 === 0) ? 1 : 2;
+        this.runnerTeam = (this.dealerTeam === 1) ? 2 : 1;
+
         this.broadcast('dealerSelected', { dealerIndex: this.dealerIndex });
         setTimeout(() => this.startRound(), 4000);
     }
@@ -163,6 +168,12 @@ class GameState {
                 break;
             case 'playCard':
                 this.handlePlayCard(playerSeat, payload.card);
+                break;
+            case 'restartGame':
+                this.restartGame();
+                break;
+            case 'nextRound':
+                this.nextRound();
                 break;
         }
     }
@@ -253,14 +264,17 @@ class GameState {
             }
         }
 
+        if (this.trick.length >= 4) return; // Prevent playing if trick is already full
+
         player.hand.splice(cardInHandIndex, 1);
         this.trick.push({ playerIndex: seatIndex, card });
-        this.currentTurnIndex = (this.currentTurnIndex + 1) % 4;
 
         if (this.trick.length === 4) {
+            this.currentTurnIndex = -1; // Disable turns while evaluating
             this.broadcastState();
             setTimeout(() => this.evaluateTrick(), 2000);
         } else {
+            this.currentTurnIndex = (this.currentTurnIndex + 1) % 4;
             this.broadcastState();
         }
     }
@@ -287,7 +301,21 @@ class GameState {
         this.leadSuit = null;
         this.currentTurnIndex = winnerSeat;
 
-        if (this.players[0].hand.length === 0) {
+        // Check Early Termination
+        let gameOver = false;
+        if (this.highestBid && this.highestBid.amount > 0) {
+            const biddingTeam = (this.highestBid.playerIndex % 2 === 0) ? 1 : 2;
+            const opposingTeam = (biddingTeam === 1) ? 2 : 1;
+            const bidAmount = this.highestBid.amount;
+
+            if (this.handsWon[biddingTeam] >= bidAmount) {
+                gameOver = true; // Bidding team wins
+            } else if (this.handsWon[opposingTeam] > (13 - bidAmount)) {
+                gameOver = true; // Bidding team loses
+            }
+        }
+
+        if (gameOver || this.players[0].hand.length === 0) {
             this.endRound();
         } else {
             setTimeout(() => this.broadcastState(), 500);
@@ -296,6 +324,49 @@ class GameState {
 
     endRound() {
         this.state = 'GAME_OVER';
+
+        // Calculate Winner
+        const biddingTeam = (this.highestBid.playerIndex % 2 === 0) ? 1 : 2;
+        const bidAmount = this.highestBid.amount;
+        const tricksWon = this.handsWon[biddingTeam];
+
+        let winningTeam = -1;
+        let success = false;
+
+        if (tricksWon >= bidAmount) {
+            winningTeam = biddingTeam;
+            success = true;
+        } else {
+            winningTeam = (biddingTeam === 1) ? 2 : 1;
+            success = false;
+        }
+
+        // Scoring Logic (Single Metric: Runner Score)
+        const runnerTeam = this.runnerTeam;
+        const dealerTeam = this.dealerTeam;
+        let diff = 0;
+
+        if (biddingTeam === runnerTeam) {
+            diff = success ? bidAmount : -(2 * bidAmount);
+            this.runnerScore += diff;
+        } else {
+            // Dealer Bidded
+            // If Dealer Wins: Runner loses leverage (Score decreases)
+            // If Dealer Loses: Runner gains leverage (Score increases)
+            diff = success ? -bidAmount : (2 * bidAmount);
+            this.runnerScore += diff;
+        }
+
+        this.winner = {
+            winningTeam,
+            biddingTeam,
+            bidAmount,
+            tricksWon,
+            success,
+            runnerScore: this.runnerScore, // Broadcast score
+            runnerTeam: this.runnerTeam
+        };
+
         this.broadcastState();
     }
 
@@ -340,9 +411,83 @@ class GameState {
             trick: this.trick,
             handsWon: this.handsWon,
             mySeat: requestingPlayer.seat,
-            leadSuit: this.leadSuit
+            leadSuit: this.leadSuit,
+            winner: this.winner, // Send winner info if Game Over
+            runnerScore: this.runnerScore, // Persistent Score
+            runnerTeam: this.runnerTeam
         };
     }
+
+    restartGame() {
+        if (this.state !== 'GAME_OVER') return;
+
+        console.log(`[GAME] Restarting Game ${this.roomId}`);
+        // Reset Game Variables
+        this.state = 'WAITING'; // Process will pick dealer shortly
+        this.deck = [];
+        this.bids = {};
+        this.highestBid = { amount: 6, playerIndex: -1 };
+        this.trumpSuit = null;
+        this.trick = [];
+        this.handsWon = { 1: 0, 2: 0 };
+        this.leadSuit = null;
+        this.winner = null;
+        this.runnerScore = 0; // Reset Score
+        this.players.forEach(p => p.hand = []);
+
+        this.broadcastState();
+
+        // Start after brief delay
+        setTimeout(() => this.pickRandomDealer(), 1000);
+    }
+
+    nextRound() {
+        if (this.state !== 'GAME_OVER') return;
+
+        console.log(`[GAME] Starting Next Round ${this.roomId}`);
+
+        let newDealerIndex = this.dealerIndex;
+
+        if (this.runnerScore < 0) {
+            // Rotate Dealer
+            newDealerIndex = (this.dealerIndex + 1) % 4;
+
+            // Flip Score
+            this.runnerScore = Math.abs(this.runnerScore);
+
+            // Update Roles
+            this.dealerTeam = (newDealerIndex % 2 === 0) ? 1 : 2;
+            this.runnerTeam = (this.dealerTeam === 1) ? 2 : 1;
+
+            console.log(`[GAME] Rotation! New Dealer: ${newDealerIndex}, New Runner Score: ${this.runnerScore}`);
+        } else {
+            console.log(`[GAME] No Rotation. Dealer: ${this.dealerIndex}, Runner Score: ${this.runnerScore}`);
+        }
+
+        // Reset Round State but keep Scores
+        this.state = 'DEALING_1';
+        this.deck = CardUtils.shuffle(CardUtils.createDeck());
+        this.handsWon = { 1: 0, 2: 0 };
+        this.bids = {};
+        this.highestBid = { amount: 6, playerIndex: -1 };
+        this.trumpSuit = null;
+        this.trick = [];
+        this.leadSuit = null;
+        this.winner = null;
+
+        this.dealerIndex = newDealerIndex; // Apply logic
+
+        this.players.forEach(p => p.hand = []);
+        this.dealCards(5);
+        this.broadcastState();
+
+        setTimeout(() => {
+            this.state = 'BIDDING';
+            this.currentBidderIndex = (this.dealerIndex + 1) % 4;
+            this.broadcastState();
+        }, 1500);
+    }
 }
+
 
 module.exports = GameState;

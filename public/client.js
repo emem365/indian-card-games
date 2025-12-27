@@ -217,7 +217,12 @@ socket.on('dealerSelected', ({ dealerIndex }) => {
     showScreen('game');
     const myPlayer = gameStateLocal.players.find(p => p.id === myPlayerId);
     if (!myPlayer) return;
-    Animations.spinDealer(dealerIndex, myPlayer.seat);
+
+    // Find dealer name
+    const dealerPlayer = gameStateLocal.players.find(p => p.seat === dealerIndex);
+    const dealerName = dealerPlayer ? dealerPlayer.name : 'Dealer';
+
+    Animations.spinDealer(dealerIndex, myPlayer.seat, dealerName);
 });
 
 socket.on('trickCollected', ({ winnerIndex }) => {
@@ -536,6 +541,7 @@ function handlePhaseUI(state, mySeatIndex) {
     bidModal.classList.add('hidden');
     trumpModal.classList.add('hidden');
 
+    // Modals Logic
     if (state.state === 'BIDDING' && state.currentBidderIndex === mySeatIndex) {
         bidModal.classList.remove('hidden');
         const minBid = state.highestBid.amount > 0 ? state.highestBid.amount + 1 : 7;
@@ -545,4 +551,108 @@ function handlePhaseUI(state, mySeatIndex) {
     } else if (state.state === 'TRUMP_SELECT' && state.highestBid.playerIndex === mySeatIndex && !state.trumpSuit) {
         trumpModal.classList.remove('hidden');
     }
+
+    // Persistent Bid Display
+    const bidDisplay = document.getElementById('bid-display');
+    const bidText = document.getElementById('bid-text');
+    if (state.highestBid && state.highestBid.amount > 6) {
+        const team = (state.highestBid.playerIndex % 2 === 0) ? 'Team 1' : 'Team 2';
+        bidText.innerText = `${state.highestBid.amount} (${team})`;
+        bidDisplay.style.opacity = 1;
+    } else {
+        // Hide if no bid (<= 6 is default/no bid)
+        bidDisplay.style.opacity = 0;
+    }
+
+    // 1. Hands Won Display (Restored)
+    const team1ScoreEl = document.getElementById('team1-score');
+    const team2ScoreEl = document.getElementById('team2-score');
+
+    if (team1ScoreEl && team2ScoreEl && state.handsWon) {
+        team1ScoreEl.innerText = `Team 1: ${state.handsWon[1] || 0}`;
+        team2ScoreEl.innerText = `Team 2: ${state.handsWon[2] || 0}`;
+
+        // Reset colors
+        team1ScoreEl.style.color = 'white';
+        team2ScoreEl.style.color = 'white';
+    }
+
+    // 2. Running Score Display (New UI Block)
+    const runningScoreEl = document.getElementById('running-score-text');
+    if (runningScoreEl) {
+        if (typeof state.runnerScore !== 'undefined' && state.runnerTeam !== -1) {
+            const runnerName = (state.runnerTeam === 1) ? "Team 1" : "Team 2";
+            runningScoreEl.innerText = `${runnerName} Running Score: ${state.runnerScore}`;
+            // Optional color coding
+            runningScoreEl.style.color = (state.runnerScore < 0) ? '#f87171' : '#e879f9';
+        } else {
+            runningScoreEl.innerText = "Waiting for Game...";
+        }
+    }
+
+    // Win Screen Logic
+    const winScreen = document.getElementById('win-screen');
+    const winnerText = document.getElementById('winner-text');
+    const winDetails = document.getElementById('win-details');
+
+    if (state.state === 'GAME_OVER') {
+        if (winScreen.classList.contains('hidden')) {
+            winScreen.classList.remove('hidden');
+
+            if (state.winner) {
+                const { winningTeam, biddingTeam, bidAmount, tricksWon, success } = state.winner;
+
+                // My perspective
+                const myTeam = (mySeatIndex % 2 === 0) ? 1 : 2;
+                if (winningTeam === myTeam) {
+                    winnerText.innerText = "VICTORY!";
+                    winnerText.style.color = "#4ade80"; // Green
+                } else {
+                    winnerText.innerText = "DEFEAT!";
+                    winnerText.style.color = "#f87171"; // Red
+                }
+
+                // Details
+                winDetails.innerHTML = `
+                    <div style="font-size: 1.5rem; margin-bottom: 10px;">Team ${winningTeam} Wins!</div>
+                    <div>Bid: ${bidAmount} (Team ${biddingTeam})</div>
+                    <div>Captured: ${tricksWon}</div>
+                `;
+
+                // Fireworks only for winners
+                if (winningTeam === myTeam) {
+                    Animations.startFireworks();
+                }
+            } else {
+                winnerText.innerText = "Game Over";
+                winDetails.innerText = "";
+            }
+        }
+    } else {
+        if (!winScreen.classList.contains('hidden')) {
+            winScreen.classList.add('hidden');
+            Animations.stopFireworks();
+        }
+    }
+}
+
+// Global Event Listeners (ensure only added once if possible, or simple assignments)
+const playAgainBtn = document.getElementById('play-again-btn');
+if (playAgainBtn) {
+    playAgainBtn.innerText = 'Next Round'; // Change label
+    playAgainBtn.onclick = () => {
+        // Emit nextRound action
+        socket.emit('gameAction', {
+            roomId: currentRoomId,
+            action: 'nextRound',
+            payload: {}
+        });
+    };
+}
+
+const exitWinBtn = document.getElementById('exit-win-btn');
+if (exitWinBtn) {
+    exitWinBtn.onclick = () => {
+        exitRoom();
+    };
 }
