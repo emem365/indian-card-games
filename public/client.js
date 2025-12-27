@@ -581,7 +581,7 @@ function handlePhaseUI(state, mySeatIndex) {
     const runningScoreEl = document.getElementById('running-score-text');
     if (runningScoreEl) {
         if (typeof state.runnerScore !== 'undefined' && state.runnerTeam !== -1) {
-            const runnerName = (state.runnerTeam === 1) ? "Team 1" : "Team 2";
+            const runnerName = (state.runnerTeam !== 1) ? "Team 1" : "Team 2";
             runningScoreEl.innerText = `${runnerName} Running Score: ${state.runnerScore}`;
             // Optional color coding
             runningScoreEl.style.color = (state.runnerScore < 0) ? '#f87171' : '#e879f9';
